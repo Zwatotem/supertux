@@ -34,7 +34,10 @@ Rock::Rock(const Vector& pos, const std::string& spritename) :
   on_ground(false),
   last_movement(),
   on_grab_script(),
-  on_ungrab_script()
+  on_ungrab_script(),
+  m_rock_above(nullptr),
+  m_rock_below(nullptr),
+  rockState(ROCKSTATE_PHYSICAL)
 {
   SoundManager::current()->preload(ROCK_SOUND);
   set_group(COLGROUP_MOVING_STATIC);
@@ -47,7 +50,10 @@ Rock::Rock(const ReaderMapping& reader) :
   on_ground(false),
   last_movement(),
   on_grab_script(),
-  on_ungrab_script()
+  on_ungrab_script(),
+  m_rock_above(nullptr),
+  m_rock_below(nullptr),
+  rockState(ROCKSTATE_PHYSICAL)
 {
   reader.get("on-grab-script", on_grab_script, "");
   reader.get("on-ungrab-script", on_ungrab_script, "");
@@ -62,7 +68,10 @@ Rock::Rock(const ReaderMapping& reader, const std::string& spritename) :
   on_ground(false),
   last_movement(),
   on_grab_script(),
-  on_ungrab_script()
+  on_ungrab_script(),
+  m_rock_above(nullptr),
+  m_rock_below(nullptr),
+  rockState(ROCKSTATE_PHYSICAL)
 {
   if (!reader.get("on-grab-script", on_grab_script)) on_grab_script = "";
   if (!reader.get("on-ungrab-script", on_ungrab_script)) on_ungrab_script = "";
@@ -73,8 +82,48 @@ Rock::Rock(const ReaderMapping& reader, const std::string& spritename) :
 void
 Rock::update(float dt_sec)
 {
-  if (!is_grabbed())
+  switch (rockState)
+  {
+  case ROCKSTATE_GRABBED:
+    if(!is_grabbed())
+    {
+      rockState = ROCKSTATE_PHYSICAL;
+    }
+    break;
+  case ROCKSTATE_FIXED:
+  {
+    Rectf bound = m_col.get_bbox().moved(Vector(0,1));
+    if (!m_rock_below && Sector::get().is_free_of_statics(bound, this, false))
+    {
+      rockState = ROCKSTATE_PHYSICAL;
+      break;
+    }
+    physic = Physic();
+    if (m_rock_below && m_rock_below->rockState == ROCKSTATE_FIXED)
+    {
+      Vector their_pos = m_rock_below->get_pos();
+      Vector our_pos = their_pos - Vector(0, m_col.get_bbox().get_height());
+      set_pos(our_pos);
+    }
+    if (is_grabbed())
+    {
+      leave_stack();
+    }
+    break;
+  }
+  case ROCKSTATE_PHYSICAL:
+    leave_stack();
+    on_ground = false;
     m_col.m_movement = physic.get_movement(dt_sec);
+    break;
+  default:
+    break;
+  }
+
+  if (is_grabbed())
+  {
+    rockState = ROCKSTATE_GRABBED;
+  }
 }
 
 void
@@ -93,11 +142,58 @@ Rock::collision_solid(const CollisionHit& hit)
   if (hit.crush)
     physic.set_velocity(0, 0);
 
-  if (hit.bottom  && !on_ground && !is_grabbed()) {
+  if (hit.bottom && !on_ground && !is_grabbed()) {
     SoundManager::current()->play(ROCK_SOUND, get_pos());
     physic.set_velocity_x(0);
     on_ground = true;
+    
+    Vector pos = m_col.m_bbox.get_middle();
+    for (auto& obj : Sector::get().get_objects_by_type<Rock>()) {
+      Rock* rock = dynamic_cast<Rock*>(&obj);
+
+      if (rock && rock->rockState == ROCKSTATE_FIXED)
+      {
+        if (abs(rock->get_bbox().get_middle().x-pos.x) > m_col.m_bbox.get_width() / 2);
+        {
+          join_stack(rock);
+          break;
+        }
+      }
+    }
+    rockState = ROCKSTATE_FIXED;
   }
+}
+
+void
+Rock::leave_stack()
+{
+  if (m_rock_above)
+  {
+    m_rock_above->leave_stack();
+    m_rock_above->rockState = ROCKSTATE_PHYSICAL;
+    m_rock_above = nullptr;
+  }
+  if (m_rock_below)
+  {
+    m_rock_below = nullptr;
+  }
+}
+void
+Rock::join_stack(Rock* rock)
+{
+  while (rock->m_rock_above != nullptr)
+  {
+    rock = rock->m_rock_above;
+  }
+
+  Vector their_pos = rock->get_pos();
+  Vector our_pos = their_pos - Vector(0, m_col.get_bbox().get_height());
+  set_pos(our_pos);
+
+  rock->m_rock_above = this;
+  m_rock_below = rock;
+  rockState = ROCKSTATE_FIXED;
+  m_rock_below->rockState = ROCKSTATE_FIXED;
 }
 
 HitResponse
@@ -112,7 +208,23 @@ Rock::collision(GameObject& other, const CollisionHit& hit)
   if (explosion) {
     return ABORT_MOVE;
   }
-
+  Rock* rock = dynamic_cast<Rock*> (&other);
+  if(rock)
+  {
+    if (rockState == ROCKSTATE_PHYSICAL && rock->rockState == ROCKSTATE_FIXED)
+    {
+      if (hit.left || hit.right)
+      {
+        return ABORT_MOVE;
+      }
+      else
+      {
+        join_stack(rock);
+        return ABORT_MOVE;
+      }
+    }
+    return ABORT_MOVE;
+  }
   if (is_grabbed()) {
     return ABORT_MOVE;
   }
@@ -139,6 +251,18 @@ Rock::grab(MovingObject& object, const Vector& pos, Direction dir_)
   last_movement = m_col.m_movement;
   set_group(COLGROUP_TOUCHABLE); //needed for lanterns catching willowisps
   on_ground = false;
+  if (m_rock_above)
+  {
+    m_rock_above->rockState = ROCKSTATE_PHYSICAL;
+    m_rock_above->m_rock_below = nullptr;
+    m_rock_above = nullptr;
+  }
+  if (m_rock_below)
+  {
+    m_rock_below->m_rock_above = nullptr;
+    m_rock_below = nullptr;
+  }
+  
 
   if (!on_grab_script.empty()) {
     Sector::get().run_script(on_grab_script, "Rock::on_grab");

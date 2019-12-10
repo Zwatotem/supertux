@@ -81,13 +81,15 @@ Trampoline::collision(GameObject& other, const CollisionHit& hit)
     return ABORT_MOVE;
   }
   //Tramponine has to be on ground to work.
-  if (on_ground) {
+  if (rockState == ROCKSTATE_FIXED) {
     auto player = dynamic_cast<Player*> (&other);
     //Trampoline works for player
     if (player) {
       float vy = player->get_physic().get_velocity_y();
+      bool top_ = hit.top || 
+      !(player->get_bbox().get_right() <= get_bbox().get_left() || player->get_bbox().get_left() >= get_bbox().get_right());
       //player is falling down on trampoline
-      if (hit.top && vy >= 0) {
+      if (top_ && vy >= 0) {
         if (!(player->get_status().bonus == AIR_BONUS))
           vy = player->get_controller().hold(Control::JUMP) ? VY_MIN : VY_INITIAL;
         else

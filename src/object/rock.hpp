@@ -37,7 +37,7 @@ public:
   virtual void update(float dt_sec) override;
 
   virtual void leave_stack();
-  virtual void join_stack(Rock* rock);
+  virtual bool join_stack(Rock* rock);
 
   virtual void grab(MovingObject& object, const Vector& pos, Direction dir) override;
   virtual void ungrab(MovingObject& object, Direction dir) override;
@@ -58,9 +58,9 @@ protected:
     ROCKSTATE_PHYSICAL,
     ROCKSTATE_FIXED
   };
-private:
   RockState rockState;
 
+private:
   Rock(const Rock&) = delete;
   Rock& operator=(const Rock&) = delete;
 };

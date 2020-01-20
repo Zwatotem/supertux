@@ -115,3 +115,7 @@ Forest World, but decided that in order to allow more access to the most recent
 version (in repositories etc.) we would have to release Milestone 2 without the
 Forest World included in the Story Mode. Constructive feedback with regards to
 the Forest World is welcome.
+
+## Notice
+
+This is modified version of Supertux, v0.6.0 containing controller view.

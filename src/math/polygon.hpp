@@ -42,6 +42,9 @@ public:
   void add_rotation(float rotation);
   float get_rotation() const { return m_rotation; }
 
+  Vector get_vertex(int ordinal) const;
+  std::pair<Vector, Vector> get_edge(int ordinal) const;
+
   Rectf bounding_box() const;
 
   int get_count() const { return m_count; }

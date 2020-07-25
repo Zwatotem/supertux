@@ -87,6 +87,18 @@ Polygon::add_rotation(float rotation)
   update_vertices();
 }
 
+Vector
+Polygon::get_vertex(int ordinal) const
+{
+  return m_transformed[ordinal];
+}
+
+std::pair<Vector, Vector>
+Polygon::get_edge(int ordinal) const
+{
+  return std::pair<Vector, Vector>(get_vertex(ordinal), get_vertex((ordinal + 1) % m_count));
+}
+
 void
 Polygon::update_vertices()
 {

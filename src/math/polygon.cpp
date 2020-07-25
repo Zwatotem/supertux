@@ -90,13 +90,33 @@ Polygon::add_rotation(float rotation)
 Vector
 Polygon::get_vertex(int ordinal) const
 {
-  return m_transformed[ordinal];
+  return m_transformed[ordinal % m_count];
 }
 
 std::pair<Vector, Vector>
 Polygon::get_edge(int ordinal) const
 {
-  return std::pair<Vector, Vector>(get_vertex(ordinal), get_vertex((ordinal + 1) % m_count));
+  return std::pair<Vector, Vector>(get_vertex(ordinal % m_count), get_vertex((ordinal + 1) % m_count));
+}
+
+bool
+Polygon::valid() const
+{
+  if (m_count < 3)
+  {
+    return false;
+  }
+  Vector edge = get_vertex(1) - get_vertex(0);
+  for (int i = 0; i < m_count; i++)
+  {
+    Vector next_edge = get_vertex(i + 2) - get_vertex(i + 1);
+    if (edge * next_edge < 0)
+    {
+      return false;
+    }
+    edge = next_edge;
+  }
+  return true;
 }
 
 void

@@ -50,7 +50,7 @@ public:
   int get_count() const { return m_count; }
   bool contains(Vector point) const;
   bool empty() const;
-  bool valid() const;
+  bool valid() const; // Checks if polygon is convex and rotates clockwise
 private:
   void update_vertices();
 

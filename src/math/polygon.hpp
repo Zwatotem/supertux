@@ -38,9 +38,9 @@ public:
   void add_translation(Vector translation);
   Vector get_translation() const { return m_translation; }
 
-  void set_rotation(Vector rotation);
-  void add_rotation(Vector rotation);
-  Vector get_rotation() const { return m_rotation; }
+  void set_rotation(float rotation);
+  void add_rotation(float rotation);
+  float get_rotation() const { return m_rotation; }
 
   Rectf bounding_box() const;
 
@@ -53,7 +53,7 @@ private:
   int m_count;
   std::vector<Vector> m_untransformed;
   Vector m_translation;
-  float m_angle;
+  float m_rotation;
   std::vector<Vector> m_transformed;
 };
 

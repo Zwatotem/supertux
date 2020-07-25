@@ -22,7 +22,7 @@ Polygon::Polygon() :
   m_untransformed(std::vector<Vector>()),
   m_translation(Vector(0,0)),
   m_rotation(0),
-  m_transformed(std::vector<Vector>)
+  m_transformed(std::vector<Vector>())
 {}
 
 Polygon::Polygon(std::vector<Vector> shape) :

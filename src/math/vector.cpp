@@ -44,6 +44,13 @@ float Vector::angle() const
   return (x==0&&y==0) ? 0 : atan2(y,x);
 }
 
+Vector Vector::rotated(float angle) const
+{
+  float sin = sinf(angle);
+  float cos = cosf(angle);
+  return Vector(x * cos - y * sin, x * sin + y * cos);
+}
+
 std::ostream& operator<<(std::ostream& out, const Vector& vector)
 {
   out << "Vector(" << vector.x << ", " << vector.y << ')';

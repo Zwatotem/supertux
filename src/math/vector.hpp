@@ -116,6 +116,7 @@ public:
   Vector unit() const;
   Vector polar() const;
   Vector rectangular() const;
+  Vector rotated(float angle) const;
 
   Vector floor() const
   {

@@ -87,4 +87,13 @@ Polygon::add_rotation(float rotation)
   update_vertices();
 }
 
+void
+Polygon::update_vertices()
+{
+  for (int i = 0; i < m_count; i++)
+  {
+    m_transformed[i] = m_untransformed[i].rotated(m_rotation) + m_translation;
+  }
+}
+
 /* EOF */

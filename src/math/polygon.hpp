@@ -48,6 +48,8 @@ public:
   bool contains(Vector point) const;
   bool empty() const;
   bool valid() const;
+private:
+  void update_vertices();
 
 private:
   int m_count;

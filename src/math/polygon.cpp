@@ -181,6 +181,7 @@ operator<<(std::ostream& out, const Polygon& poly)
       << "translation: " << poly.get_translation() << ", "
       << "rotation: " << poly.get_rotation()
       << ")";
+  return out;
 }
 
 /* EOF */

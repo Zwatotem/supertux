@@ -173,4 +173,14 @@ Polygon::update_vertices()
   }
 }
 
+std::ostream&
+operator<<(std::ostream& out, const Polygon& poly)
+{
+  out << "Polygon("
+      << "[" << poly.get_count() << " vertices], "
+      << "translation: " << poly.get_translation() << ", "
+      << "rotation: " << poly.get_rotation()
+      << ")";
+}
+
 /* EOF */

@@ -195,10 +195,10 @@ Player::Player(PlayerStatus& player_status, const std::string& name_) :
   m_idle_timer.start(static_cast<float>(IDLE_TIME[0]) / 1000.0f);
 
   std::vector<Vector> polyshape = {
-    Vector(32.0f,0.0f),
-    Vector(0.0f,32.0f),
-    Vector(-32.0f,0.0f),
-    Vector(0.0f,-32.0f)
+    Vector(32.0f, 0.0f),
+    Vector(0.0f, 48.0f),
+    Vector(-32.0f, 0.0f),
+    Vector(0.0f, -32.0f)
   };
 
   m_polyboy = Polygon(polyshape);
@@ -515,6 +515,7 @@ Player::update(float dt_sec)
   }
 
   m_polyboy.set_translation(get_bbox().get_middle());
+  m_polyboy.set_rotation(get_physic().get_velocity_x()/MAX_WALK_XM);
 }
 
 void

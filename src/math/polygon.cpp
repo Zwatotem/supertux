@@ -99,6 +99,23 @@ Polygon::get_edge(int ordinal) const
   return std::pair<Vector, Vector>(get_vertex(ordinal % m_count), get_vertex((ordinal + 1) % m_count));
 }
 
+Rectf
+Polygon::bounding_box() const
+{
+  float top = m_transformed[0].y;
+  float bottom = m_transformed[0].y;
+  float left = m_transformed[0].x;
+  float right = m_transformed[0].x;
+  for (auto &&vert : m_transformed)
+  {
+    top = std::min(top, vert.y);
+    bottom = std::max(bottom, vert.y);
+    left = std::min(left, vert.x);
+    right = std::max(right, vert.x);
+  }
+  return Rectf(left, top, right, bottom);
+}
+
 bool
 Polygon::valid() const
 {
@@ -132,6 +149,19 @@ Polygon::contains(Vector point) const
     }
     vertex_relative = next_vertex;
   }
+}
+
+bool
+Polygon::empty() const
+{
+  for (auto &&vert : m_untransformed)
+  {
+    if (vert != Vector(0,0))
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
 void

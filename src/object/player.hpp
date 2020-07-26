@@ -17,6 +17,7 @@
 #ifndef HEADER_SUPERTUX_OBJECT_PLAYER_HPP
 #define HEADER_SUPERTUX_OBJECT_PLAYER_HPP
 
+#include "math/polygon.hpp"
 #include "scripting/player.hpp"
 #include "sprite/sprite_ptr.hpp"
 #include "squirrel/exposed_object.hpp"
@@ -238,6 +239,7 @@ private:
   bool m_jump_early_apex;
   bool m_on_ice;
   bool m_ice_this_frame;
+  Polygon m_polyboy;
   SpritePtr m_lightsprite;
   SpritePtr m_powersprite;
 

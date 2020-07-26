@@ -147,6 +147,7 @@ Player::Player(PlayerStatus& player_status, const std::string& name_) :
   m_jump_early_apex(false),
   m_on_ice(false),
   m_ice_this_frame(false),
+  m_polyboy(),
   m_lightsprite(SpriteManager::current()->create("images/creatures/tux/light.sprite")),
   m_powersprite(SpriteManager::current()->create("images/creatures/tux/powerups.sprite")),
   m_dir(Direction::RIGHT),
@@ -192,6 +193,15 @@ Player::Player(PlayerStatus& player_status, const std::string& name_) :
 {
   m_name = name_;
   m_idle_timer.start(static_cast<float>(IDLE_TIME[0]) / 1000.0f);
+
+  std::vector<Vector> polyshape = {
+    Vector(32.0f,0.0f),
+    Vector(0.0f,32.0f),
+    Vector(-32.0f,0.0f),
+    Vector(0.0f,-32.0f)
+  };
+
+  m_polyboy = Polygon(polyshape);
 
   SoundManager::current()->preload("sounds/bigjump.wav");
   SoundManager::current()->preload("sounds/jump.wav");
@@ -504,6 +514,7 @@ Player::update(float dt_sec)
       m_sprite->set_animation_loops(-1);
   }
 
+  m_polyboy.set_translation(get_bbox().get_middle());
 }
 
 void
@@ -1599,7 +1610,14 @@ if (!m_swimming && m_water_jump) {
     if (m_player_status.has_hat_sprite() && !m_swimming && !m_water_jump)
       m_powersprite->draw(context.color(), get_pos(), LAYER_OBJECTS + 1);
   }
-
+  for (int i = 0; i < m_polyboy.get_count(); i++)
+  {
+    Vector mid = m_polyboy.get_translation();
+    Vector first = m_polyboy.get_vertex(i);
+    Vector second = m_polyboy.get_vertex(i+1);
+    const Color bluebg(0.2f, 0.2f, 1.0f, 0.5f);
+    context.color().draw_triangle(mid, first, second, bluebg, LAYER_OBJECTS);
+  }
 }
 
 void

@@ -110,7 +110,7 @@ Polygon::valid() const
   for (int i = 0; i < m_count; i++)
   {
     Vector next_edge = get_vertex(i + 2) - get_vertex(i + 1);
-    if (edge * next_edge < 0)
+    if (edge.x * next_edge.y - edge.y * next_edge.x < 0)
     {
       return false;
     }

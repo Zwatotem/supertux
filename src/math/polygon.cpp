@@ -119,6 +119,21 @@ Polygon::valid() const
   return true;
 }
 
+bool
+Polygon::contains(Vector point) const
+{
+  Vector vertex_relative = get_vertex(0) - point;
+  for (int i = 0; i < m_count; i++)
+  {
+    Vector next_vertex = get_vertex(i + 1) - point;
+    if (vertex_relative.x * next_vertex.y - vertex_relative.y * next_vertex.x < 0)
+    {
+      return false;
+    }
+    vertex_relative = next_vertex;
+  }
+}
+
 void
 Polygon::update_vertices()
 {

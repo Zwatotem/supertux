@@ -32,6 +32,7 @@ struct LineRequest;
 struct TextureBatchRequest;
 struct TextureRequest;
 struct TriangleRequest;
+struct PolygonRequest;
 
 class Painter
 {
@@ -45,6 +46,7 @@ public:
   virtual void draw_inverse_ellipse(const InverseEllipseRequest& request) = 0;
   virtual void draw_line(const LineRequest& request) = 0;
   virtual void draw_triangle(const TriangleRequest& request) = 0;
+  virtual void draw_polygon(const PolygonRequest& request) = 0;
 
   virtual void clear(const Color& color) = 0;
   virtual void get_pixel(const GetPixelRequest& request) const = 0;

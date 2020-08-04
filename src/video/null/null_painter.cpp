@@ -63,6 +63,11 @@ NullPainter::draw_triangle(const TriangleRequest& request)
   log_info << "NullPainter::draw_triangle()" << std::endl;
 }
 
+void
+NullPainter::draw_polygon(const PolygonRequest& request)
+{
+  log_info << "NullPainter::draw_polygon()" << std::endl;
+}
 
 void
 NullPainter::clear(const Color& color)

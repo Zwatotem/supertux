@@ -31,7 +31,7 @@ class Surface;
 
 enum RequestType
 {
-  TEXTURE, GRADIENT, FILLRECT, INVERSEELLIPSE, GETPIXEL, LINE, TRIANGLE
+  TEXTURE, GRADIENT, FILLRECT, INVERSEELLIPSE, GETPIXEL, LINE, TRIANGLE, POLYGON
 };
 
 struct DrawingRequest
@@ -151,6 +151,18 @@ struct TriangleRequest : public DrawingRequest
   {}
 
   Vector pos1, pos2, pos3;
+  Color  color;
+};
+
+struct PolygonRequest : public DrawingRequest
+{
+  PolygonRequest() :
+    DrawingRequest(POLYGON),
+    shape(),
+    color()
+  {}
+
+  std::vector<Vector> shape;
   Color  color;
 };
 

@@ -33,7 +33,6 @@ public:
   virtual void draw_inverse_ellipse(const InverseEllipseRequest& request) override;
   virtual void draw_line(const LineRequest& request) override;
   virtual void draw_triangle(const TriangleRequest& request) override;
-  virtual void draw_polygon(const PolygonRequest& request) override;
 
 
   virtual void clear(const Color& color) override;

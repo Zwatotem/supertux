@@ -95,10 +95,6 @@ Canvas::render(Renderer& renderer, Filter filter)
         painter.draw_triangle(static_cast<const TriangleRequest&>(request));
         break;
 
-      case POLYGON:
-        painter.draw_polygon(static_cast<const PolygonRequest&>(request));
-        break;
-
       case GETPIXEL:
         painter.get_pixel(static_cast<const GetPixelRequest&>(request));
         break;
@@ -352,25 +348,13 @@ Canvas::draw_triangle(const Vector& pos1, const Vector& pos2, const Vector& pos3
 void
 Canvas::draw_polygon(const Polygon& poly, const Color& color, int layer)
 {
-  auto request = new(m_obst) PolygonRequest;
-
-  request->type = POLYGON;
-  request->layer = layer;
-
-  request->flip = m_context.transform().flip;
-  request->alpha = m_context.transform().alpha;
-
-  // Translation
-  for (int i = 0; i < poly.get_count(); i++)
+  Vector mid = poly.get_translation();
+  for(int i = 0; i < poly.get_count(); i++)
   {
-    request->shape.push_back(apply_translate(poly.get_vertex(i)));
+    Vector v1 = poly.get_vertex(i);
+    Vector v2 = poly.get_vertex(i + 1);
+    draw_triangle(mid, v1, v2, color, layer);
   }
-  
-
-  request->color = color;
-  request->color.alpha = color.alpha * m_context.transform().alpha;
-
-  m_requests.push_back(request);
 }
 
 void

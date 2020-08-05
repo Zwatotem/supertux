@@ -455,31 +455,6 @@ GLPainter::draw_triangle(const TriangleRequest& request)
 
   assert_gl();
 }
-void
-GLPainter::draw_polygon(const PolygonRequest& request)
-{
-  assert_gl();
-
-  float* vertices = new float[2*request.shape.size()];
-  for (unsigned long i = 0; i < request.shape.size(); i++)
-  {
-    vertices[2*i] = request.shape[i].x;
-    vertices[2*i+1] = request.shape[i].y;
-  }
-  const float* const_vertices = vertices;
-  
-  GLContext& context = m_video_system.get_context();
-  
-  context.blend_func(sfactor(request.blend), dfactor(request.blend));
-  context.bind_no_texture();
-  context.set_texcoord(0.0f, 0.0f);
-  context.set_positions(vertices, sizeof(vertices));
-  context.set_color(request.color);
-
-  context.draw_arrays(GL_TRIANGLES, 0, request.shape.size());
-  
-  assert_gl();
-}
 
 void
 GLPainter::clear(const Color& color)

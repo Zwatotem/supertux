@@ -154,17 +154,6 @@ struct TriangleRequest : public DrawingRequest
   Color  color;
 };
 
-struct PolygonRequest : public DrawingRequest
-{
-  PolygonRequest() :
-    DrawingRequest(POLYGON),
-    shape(),
-    color()
-  {}
-
-  std::vector<Vector> shape;
-  Color  color;
-};
 
 struct GetPixelRequest : public DrawingRequest
 {

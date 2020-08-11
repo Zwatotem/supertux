@@ -19,10 +19,12 @@
 
 #include <vector>
 #include "math/vector.hpp"
-#include "math/rectf.hpp"
+// #include "math/rectf.hpp"
+#include "math/shape.hpp"
 
+class Rectf;
 /** Only for convex polygons. Concave polygons will be treated as invalid. */
-class Polygon
+class Polygon final : public Shape
 {
 public:
   Polygon();
@@ -34,6 +36,10 @@ public:
   Polygon(Polygon shape, Vector translation, float angle);
 
 public:
+  virtual bool intersects(const Shape* other) const override;
+  virtual Vector get_penetration_vector(const Shape* other) const override { return Vector(0,0); }
+  virtual Rectf bounding_box() const;
+
   void set_translation(Vector translation);
   void add_translation(Vector translation);
   Vector get_translation() const { return m_translation; }
@@ -45,12 +51,15 @@ public:
   Vector get_vertex(int ordinal) const;
   std::pair<Vector, Vector> get_edge(int ordinal) const;
 
-  Rectf bounding_box() const;
 
   int get_count() const { return m_count; }
   bool contains(Vector point) const;
   bool empty() const;
   bool valid() const; // Checks if polygon is convex and rotates clockwise
+
+// protected:
+  virtual bool partial_intersection_check(const Shape* other) const override;
+
 private:
   void update_vertices();
 

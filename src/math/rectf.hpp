@@ -19,14 +19,17 @@
 
 #include <assert.h>
 #include <iosfwd>
+#include <vector>
 
 #include "math/anchor_point.hpp"
 #include "math/sizef.hpp"
 #include "math/vector.hpp"
+#include "math/shape.hpp"
+#include "math/polygon.hpp"
 
 class Rect;
 
-class Rectf final
+class Rectf final : public Shape
 {
 public:
   static Rectf from_center(const Vector& center, const Sizef& size)
@@ -74,6 +77,10 @@ public:
             m_size == other.m_size);
   }
 
+  virtual bool intersects(const Shape* other) const override;
+  virtual Vector get_penetration_vector(const Shape* other) const override { return Vector(0,0); }
+  virtual Rectf bounding_box() const override { return *this; }
+
   // This is a temporary hack to pass x/y to ReaderMapping
   float& get_left() { return m_p1.x; }
   float& get_top() { return m_p1.y; }
@@ -104,6 +111,8 @@ public:
 
   void move(const Vector& v) { m_p1 += v; }
   Rectf moved(const Vector& v) const { return Rectf(m_p1 + v, m_size); }
+
+  Polygon as_polygon() const;
 
   bool contains(const Vector& v) const {
     return v.x >= m_p1.x && v.y >= m_p1.y && v.x < get_right() && v.y < get_bottom();
@@ -155,6 +164,9 @@ public:
     m_size = Sizef(p.x - m_p1.x,
                    p.y - m_p1.y);
   }
+
+// protected:
+  virtual bool partial_intersection_check(const Shape* other) const override;
 
 private:
   /// upper left edge

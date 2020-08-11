@@ -16,7 +16,8 @@
 
 #include <ostream>
 
-#include "polygon.hpp"
+#include "math/polygon.hpp"
+#include "math/rectf.hpp"
 #include "math/util.hpp"
 
 Polygon::Polygon() :
@@ -55,6 +56,41 @@ Polygon::Polygon(Polygon shape, Vector translation, float rotation) :
 {
   set_translation(translation);
   set_rotation(rotation);
+}
+
+bool
+Polygon::intersects(const Shape* other) const
+{
+  auto my_bbox = bounding_box();
+  auto other_bbox = other->bounding_box();
+  if(!my_bbox.intersects(&other_bbox))
+    return false;
+  return partial_intersection_check(other) && other->partial_intersection_check(this);
+}
+
+bool
+Polygon::partial_intersection_check(const Shape* other) const
+{
+  switch (other->m_type)
+  {
+  case RECTF:
+  {
+    auto poly = (static_cast<const Rectf*>(other))->as_polygon();
+    return partial_intersection_check(&poly);
+  }
+  case POLYGON:
+  {
+    auto poly = static_cast<const Polygon*>(other);
+    for (int i = 0; i < poly->get_count(); i++)
+    {
+      if (contains(poly->get_vertex(i)))
+        return true;
+    }
+  }
+    return false;
+  default:
+    return false;
+  }
 }
 
 void
@@ -151,6 +187,7 @@ Polygon::contains(Vector point) const
     }
     vertex_relative = next_vertex;
   }
+  return true;
 }
 
 bool

@@ -1836,7 +1836,18 @@ void Player::draw(DrawingContext &context)
       m_powersprite->draw(context.color(), get_pos(), LAYER_OBJECTS + 1);
   }
   const Color bluebg(0.2f, 0.2f, 1.0f, 0.5f);
-  context.color().draw_polygon(m_polyboy, bluebg, LAYER_OBJECTS);
+  const Color redbg(1.0f, 0.2f, 0.2f, 0.5f);
+  auto objects = Sector::get().get_nearby_objects(get_pos(), 200.0f);
+  bool cuts = false;
+  for (auto &&obj : objects)
+  {
+    if(obj!=this){
+      context.color().draw_polygon(obj->get_bbox().as_polygon(), redbg, LAYER_OBJECTS + 4);
+      cuts |= m_polyboy./*bounding_box().*/intersects(&obj->get_bbox());
+    }
+  }
+  context.color().draw_polygon(m_polyboy, cuts ? redbg : bluebg, LAYER_OBJECTS);
+  // context.color().draw_filled_rect(m_polyboy.bounding_box(), redbg, LAYER_OBJECTS - 1);
   // for (int i = 0; i < m_polyboy.get_count(); i++)
   // {
   //   Vector mid = m_polyboy.get_translation();

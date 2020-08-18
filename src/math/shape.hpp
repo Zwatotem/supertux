@@ -22,21 +22,24 @@
 
 class Rectf;
 
+enum ShapeType
+{
+  POLYGON,
+  RECTF
+};
+
 class Shape
 {
-public:
-  enum ShapeType
-  {
-    POLYGON,
-    RECTF
-  };
   friend class Rectf;
   friend class Polygon;
 
 public:
   static bool intersect(Shape& shape1, Shape& shape2);
 
-  Shape() {}
+  Shape(ShapeType type) :
+  m_type(type)
+  {}
+  
   virtual ~Shape() {}
 
   virtual bool intersects(const Shape* other) const = 0;

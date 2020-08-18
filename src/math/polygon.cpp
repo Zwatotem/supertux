@@ -21,6 +21,7 @@
 #include "math/util.hpp"
 
 Polygon::Polygon() :
+  Shape(POLYGON),
   m_count(0),
   m_untransformed(std::vector<Vector>()),
   m_translation(Vector(0,0)),
@@ -29,6 +30,7 @@ Polygon::Polygon() :
 {}
 
 Polygon::Polygon(std::vector<Vector> shape) :
+  Shape(POLYGON),
   m_count(shape.size()),
   m_untransformed(shape),
   m_translation(Vector(0,0)),
@@ -37,6 +39,7 @@ Polygon::Polygon(std::vector<Vector> shape) :
 {}
 
 Polygon::Polygon(std::vector<Vector> shape, Vector translation, float rotation) :
+  Shape(POLYGON),
   m_count(shape.size()),
   m_untransformed(shape),
   m_translation(translation),
@@ -48,6 +51,7 @@ Polygon::Polygon(std::vector<Vector> shape, Vector translation, float rotation) 
 }
 
 Polygon::Polygon(Polygon shape, Vector translation, float rotation) :
+  Shape(POLYGON),
   m_count(shape.get_count()),
   m_untransformed(shape.m_untransformed),
   m_translation(translation),

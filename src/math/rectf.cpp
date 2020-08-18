@@ -35,7 +35,7 @@ Rectf::intersects(const Shape* other) const
   auto bbox = other->bounding_box();
   if(other->m_type != RECTF && !intersects(&bbox))
     return false;
-  return partial_intersection_check(other) && other->partial_intersection_check(this);
+  return partial_intersection_check(other) || other->partial_intersection_check(this);
 }
 
 bool
@@ -45,11 +45,8 @@ Rectf::partial_intersection_check(const Shape* other) const
   {
   case RECTF:
   {
-    const Rectf* other_rectf = static_cast<const Rectf*>(other);
-    return other_rectf->get_left() > get_left()
-        && other_rectf->get_left() < get_right()
-        && other_rectf->get_top() > get_top()
-        && other_rectf->get_top() < get_bottom();
+    const Rectf* other_rectf = reinterpret_cast<const Rectf*>(other);
+    return contains(*other_rectf);
   }
   case POLYGON:
     return as_polygon().partial_intersection_check(other);
@@ -62,10 +59,10 @@ Polygon
 Rectf::as_polygon() const
 {
   return Polygon(std::vector<Vector> {
-    Vector(0,0),
-    Vector(get_width(),0),
-    Vector(get_width(),get_height()),
-    Vector(get_height(),0)
+    Vector(0, 0),
+    Vector(get_width(), 0),
+    Vector(get_width(), get_height()),
+    Vector(0, get_height())
   }, p1(), 0.0f);
 }
 

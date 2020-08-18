@@ -21,6 +21,7 @@
 #include "math/rect.hpp"
 
 Rectf::Rectf(const Rect& rect) :
+  Shape(RECTF),
   m_p1(static_cast<float>(rect.left),
      static_cast<float>(rect.top)),
   m_size(static_cast<float>(rect.get_width()),

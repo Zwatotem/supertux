@@ -27,6 +27,12 @@ jobs:
       working-directory: ${{runner.workspace}}
       run: sudo apt-get update && sudo apt-get install -y build-essential libogg-dev libvorbis-dev libopenal-dev libboost-all-dev libsdl2-dev libsdl2-image-dev libfreetype6-dev libraqm-dev libcurl4-openssl-dev libglew-dev libharfbuzz-dev libfribidi-dev
 
+    - name: Update submodules
+      shell: bash
+      working-directory: ${{runner.workspace}}
+      run: git submodule update --init --recursive
+
+
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system

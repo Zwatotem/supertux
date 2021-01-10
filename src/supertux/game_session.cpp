@@ -18,7 +18,9 @@
 
 #include "audio/sound_manager.hpp"
 #include "control/input_manager.hpp"
+#include "editor/editor.hpp"
 #include "gui/menu_manager.hpp"
+#include "math/vector.hpp"
 #include "object/camera.hpp"
 #include "object/endsequence_fireworks.hpp"
 #include "object/endsequence_walkleft.hpp"
@@ -26,6 +28,7 @@
 #include "object/level_time.hpp"
 #include "object/music_object.hpp"
 #include "object/player.hpp"
+#include "sdk/integration.hpp"
 #include "supertux/fadetoblack.hpp"
 #include "supertux/gameconfig.hpp"
 #include "supertux/level.hpp"
@@ -74,7 +77,8 @@ GameSession::GameSession(const std::string& levelfile_, Savegame& savegame, Stat
   m_max_fire_bullets_at_start(),
   m_max_ice_bullets_at_start(),
   m_active(false),
-  m_end_seq_started(false)
+  m_end_seq_started(false),
+  m_current_cutscene_text()
 {
   if (restart_level() != 0)
     throw std::runtime_error ("Initializing the level failed.");
@@ -171,6 +175,12 @@ GameSession::on_escape_press()
 
     m_currentsector->get_player().m_dying_timer.start(FLT_EPSILON);
     return;   // don't let the player open the menu, when Tux is dying
+  }
+  
+  if (m_level->m_is_in_cutscene && !m_level->m_skip_cutscene)
+  {
+    m_level->m_skip_cutscene = true;
+    return;
   }
 
   if (!m_level->m_suppress_pause_menu) {
@@ -319,7 +329,9 @@ GameSession::update(float dt_sec, const Controller& controller)
     on_escape_press();
   }
 
-  if (controller.pressed(Control::CHEAT_MENU) && g_config->developer_mode)
+  if (controller.pressed(Control::CHEAT_MENU) &&
+      (g_config->developer_mode || (Editor::current() && Editor::current()->is_testing_level()))
+     )
   {
     if (!MenuManager::instance().is_active())
     {
@@ -335,6 +347,39 @@ GameSession::update(float dt_sec, const Controller& controller)
       toggle_pause();
       MenuManager::instance().set_menu(MenuStorage::DEBUG_MENU);
     }
+  }
+
+  // Animate the full-completion stats stuff - do this even when the game isn't paused (that's a
+  // design choice, if you prefer it not to animate when paused, add `if (!m_game_pause)`)
+  m_level->m_stats.update_timers(dt_sec);
+
+  // FIXME: I (Semphris) am responsible for this awful code. I have no idea why I originally did it
+  // that way. I suppose it was back in the time when I didn't understand the engine very well (3
+  // months prior to writing this - thanks git). I'm going to remove all of this (and the useless
+  // CutsceneInfo object) sometime soon and use the damn draw function like a normal programmer
+  // would do - if I somehow forget, please remind me or do it for me.
+  if (m_level->m_is_in_cutscene && !m_level->m_skip_cutscene && m_current_cutscene_text == nullptr)
+  {
+    /*std::string cutscene_text = _("Press escape to skip");
+    FloatingText* text = new FloatingText(
+        // *(new Vector(32, 32)),
+        m_currentsector->get_camera().get_translation() + *(new Vector(cutscene_text.size() * 8 + 32, 32)),
+        cutscene_text
+      );
+    
+    m_currentsector->add_object(std::unique_ptr<GameObject> (text));*/
+    
+    //m_current_cutscene_text = std::unique_ptr<GameObject> (cutscene_text);
+    
+    
+  }
+  else if ((!m_level->m_is_in_cutscene || m_level->m_skip_cutscene) && m_current_cutscene_text != nullptr)
+  {
+  printf("Before\n");
+    /*try {
+      m_current_cutscene_text->remove_me();
+    } catch(...) {}*/
+  printf("After\n");
   }
 
   process_events();
@@ -423,6 +468,22 @@ GameSession::update(float dt_sec, const Controller& controller)
 
     get_current_sector().get_player().kill(true);
   }
+}
+
+IntegrationStatus
+GameSession::get_status() const
+{
+  IntegrationStatus status;
+  status.m_details.push_back("Playing");
+  if (get_current_level().is_worldmap())
+  {
+    status.m_details.push_back("In worldmap: " + get_current_level().get_name());
+  }
+  else
+  {
+    status.m_details.push_back("In level: " + get_current_level().get_name());
+  }
+  return status;
 }
 
 void
@@ -573,6 +634,8 @@ GameSession::drawstatus(DrawingContext& context)
   if (m_end_sequence) {
     m_level->m_stats.draw_endseq_panel(context, m_best_level_statistics, m_statistics_backdrop, m_level->m_target_time);
   }
+
+  m_level->m_stats.draw_ingame_stats(context, m_game_pause);
 }
 
 /* EOF */

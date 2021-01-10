@@ -112,6 +112,7 @@ const float UNDUCK_HURT_TIME = 0.25f;
 const float JUMP_EARLY_APEX_FACTOR = 3.0;
 
 const float JUMP_GRACE_TIME = 0.25f; /**< time before hitting the ground that the jump button may be pressed (and still trigger a jump) */
+const float COYOTE_TIME = 0.1f; /**< time between the moment leaving a platform without jumping and being able to jump anyways despite being in the air */
 
 /* Tux's collision rectangle */
 const float TUX_WIDTH = 31.8f;
@@ -119,6 +120,9 @@ const float RUNNING_TUX_WIDTH = 34;
 const float SMALL_TUX_HEIGHT = 30.8f;
 const float BIG_TUX_HEIGHT = 62.8f;
 const float DUCKED_TUX_HEIGHT = 31.8f;
+
+/** when Tux swims down and approaches the bottom of the screen, push him back up with that strength */
+const float WATER_FALLOUT_FORCEBACK_STRENGTH = 1024.f;
 
 bool no_water = true;
 
@@ -140,6 +144,7 @@ Player::Player(PlayerStatus& player_status, const std::string& name_) :
   m_peekingY(Direction::AUTO),
   m_ability_time(),
   m_stone(false),
+  m_falling_below_water(false),
   m_swimming(false),
   m_swimboosting(false),
   m_speedlimit(0), //no special limit
@@ -157,6 +162,7 @@ Player::Player(PlayerStatus& player_status, const std::string& name_) :
   m_jumping(false),
   m_can_jump(true),
   m_jump_button_timer(),
+  m_coyote_timer(),
   m_wants_buttjump(false),
   m_does_buttjump(false),
   m_invincible_timer(),
@@ -415,6 +421,10 @@ Player::update(float dt_sec)
         m_lightsprite->set_angle(m_sprite->get_angle());
   }
 
+  if (on_ground()) {
+    m_coyote_timer.start(COYOTE_TIME);
+  }
+
   // set fall mode...
   if (on_ground()) {
     m_fall_mode = ON_GROUND;
@@ -447,11 +457,20 @@ Player::update(float dt_sec)
       m_ability_time = static_cast<float>(m_player_status.max_air_time) * GLIDE_TIME_PER_FLOWER;
   }
 
-    if (m_second_growup_sound_timer.check())
-    {
-      SoundManager::current()->play("sounds/grow.wav");
-      m_second_growup_sound_timer.stop();
-    }
+  if (m_second_growup_sound_timer.check())
+  {
+    SoundManager::current()->play("sounds/grow.wav");
+    m_second_growup_sound_timer.stop();
+  }
+
+  // Handle player approaching the bottom of the screen while swimming
+  if (m_falling_below_water) {
+    m_physic.set_velocity_y(std::min(m_physic.get_velocity_y(), 0.f));
+  }
+
+  if ((get_pos().y > Sector::get().get_height() - m_col.m_bbox.get_height()) && (!m_ghost_mode)) {
+    m_physic.set_acceleration_y(-WATER_FALLOUT_FORCEBACK_STRENGTH);
+  }
 
   // calculate movement for this frame
   m_col.m_movement = m_physic.get_movement(dt_sec);
@@ -481,7 +500,7 @@ Player::update(float dt_sec)
       Vector pspeed = Vector(0, 0);
       Vector paccel = Vector(0, 0);
       Sector::get().add<SpriteParticle>(
-        "images/objects/particles/sparkle.sprite",
+        "images/particles/sparkle.sprite",
         // draw bright sparkle when there is lots of time left,
         // dark sparkle when invincibility is about to end
         (m_invincible_timer.get_timeleft() > TUX_INVINCIBLE_TIME_WARNING) ?
@@ -865,7 +884,7 @@ Player::do_backflip() {
 
 void
 Player::do_jump(float yspeed) {
-  if (!on_ground())
+  if (!on_ground() && !m_coyote_timer.started())
     return;
 
   m_physic.set_velocity_y(yspeed);
@@ -907,7 +926,7 @@ Player::handle_vertical_input()
 {
   // Press jump key
   if (m_controller->pressed(Control::JUMP)) m_jump_button_timer.start(JUMP_GRACE_TIME);
-  if (m_controller->hold(Control::JUMP) && m_jump_button_timer.started() && m_can_jump) {
+  if (m_controller->hold(Control::JUMP) && m_jump_button_timer.started() && (m_can_jump || m_coyote_timer.started())) {
     m_jump_button_timer.stop();
     if (m_duck) {
       // when running, only jump a little bit; else do a backflip
@@ -929,6 +948,8 @@ Player::handle_vertical_input()
       else
         do_jump((fabsf(m_physic.get_velocity_x()) > MAX_WALK_XM) ? -580.0f : -520.0f);
     }
+    //Stop the coyote timer only after calling do_jump, because do_jump also checks for the timer
+    m_coyote_timer.stop();
     // airflower glide only when holding jump key
   } else  if (m_controller->hold(Control::JUMP) && m_player_status.bonus == AIR_BONUS && m_physic.get_velocity_y() > MAX_GLIDE_YM) {
       if (m_ability_time > 0 && !m_ability_timer.started())
@@ -1350,7 +1371,7 @@ Player::set_bonus(BonusType type, bool animate)
       particle_name = "earthtux-hardhat";
     }
     if (!particle_name.empty() && animate) {
-      Sector::get().add<SpriteParticle>("images/objects/particles/" + particle_name + ".sprite",
+      Sector::get().add<SpriteParticle>("images/particles/" + particle_name + ".sprite",
                                              action, ppos, ANCHOR_TOP, pspeed, paccel, LAYER_OBJECTS - 1);
     }
 
@@ -1586,7 +1607,7 @@ if (!m_swimming && m_water_jump) {
       float py = m_col.m_bbox.get_bottom()+8;
       Vector ppos = Vector(px, py);
       Sector::get().add<SpriteParticle>(
-        "images/objects/particles/sparkle.sprite", "dark",
+        "images/particles/sparkle.sprite", "dark",
         ppos, ANCHOR_MIDDLE, Vector(0, 0), Vector(0, 0), LAYER_OBJECTS+1+5);
     }
   }
@@ -1840,8 +1861,16 @@ Player::check_bounds()
     set_pos(Vector(Sector::get().get_width() - m_col.m_bbox.get_width(), m_col.m_bbox.get_top()));
   }
 
+  m_falling_below_water = false;
+
   /* fallen out of the level? */
-  if ((get_pos().y > Sector::get().get_height()) && (!m_ghost_mode)) {
+  if (m_swimming) {
+    // If swimming, don't kill; just prevent from falling below the ground
+    if ((get_pos().y > Sector::get().get_height() - 1) && (!m_ghost_mode)) {
+      set_pos(Vector(get_pos().x, Sector::get().get_height() - 1));
+      m_falling_below_water = true;
+    }
+  } else if ((get_pos().y > Sector::get().get_height()) && (!m_ghost_mode)) {
     kill(true);
     return;
   }

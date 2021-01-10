@@ -74,12 +74,17 @@
 #include "object/bicycle_platform.hpp"
 #include "object/bonus_block.hpp"
 #include "object/brick.hpp"
+#include "object/bumper.hpp"
 #include "object/camera.hpp"
 #include "object/candle.hpp"
+#include "object/circleplatform.hpp"
 #include "object/cloud_particle_system.hpp"
+#include "object/custom_particle_system.hpp"
+#include "object/custom_particle_system_file.hpp"
 #include "object/coin.hpp"
 #include "object/decal.hpp"
 #include "object/explosion.hpp"
+#include "object/fallblock.hpp"
 #include "object/firefly.hpp"
 #include "object/ghost_particle_system.hpp"
 #include "object/gradient.hpp"
@@ -93,6 +98,7 @@
 #include "object/level_time.hpp"
 #include "object/magicblock.hpp"
 #include "object/path_gameobject.hpp"
+#include "object/particle_zone.hpp"
 #include "object/platform.hpp"
 #include "object/pneumatic_platform.hpp"
 #include "object/powerup.hpp"
@@ -204,12 +210,17 @@ GameObjectFactory::init_factories()
   add_factory<BicyclePlatform>("bicycle-platform");
   add_factory<BonusBlock>("bonusblock");
   add_factory<Brick>("brick");
+  add_factory<Bumper>("bumper");
   add_factory<Camera>("camera");
   add_factory<Candle>("candle");
+  add_factory<CirclePlatform>("circleplatform");
   add_factory<CloudParticleSystem>("particles-clouds");
+  add_factory<CustomParticleSystem>("particles-custom");
+  add_factory<CustomParticleSystemFile>("particles-custom-file");
   add_factory<Coin>("coin");
   add_factory<Decal>("decal");
   add_factory<Explosion>("explosion");
+  add_factory<FallBlock>("fallblock");
   add_factory<Firefly>("firefly");
   add_factory<GhostParticleSystem>("particles-ghosts");
   add_factory<Gradient>("gradient");
@@ -223,6 +234,7 @@ GameObjectFactory::init_factories()
   add_factory<Lantern>("lantern");
   add_factory<LevelTime>("leveltime");
   add_factory<MagicBlock>("magicblock");
+  add_factory<ParticleZone>("particle-zone");
   add_factory<Platform>("platform");
   add_factory<PneumaticPlatform>("pneumatic-platform");
   add_factory<PowerUp>("powerup");

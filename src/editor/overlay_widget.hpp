@@ -22,6 +22,7 @@
 #include "control/input_manager.hpp"
 #include "editor/widget.hpp"
 #include "math/vector.hpp"
+#include "object/tilemap.hpp"
 
 class Color;
 class DrawingContext;
@@ -41,7 +42,13 @@ public:
   static bool render_background;
   static bool render_grid;
   static bool snap_to_grid;
+  static bool autotile_mode;
+  static bool autotile_help;
   static int selected_snap_grid_size;
+
+  static Color text_autotile_available_color;
+  static Color text_autotile_active_color;
+  static Color text_autotile_error_color;
 
 public:
   EditorOverlayWidget(Editor& editor);
@@ -64,9 +71,17 @@ public:
   void edit_path(Path* path, GameObject* new_marked_object = nullptr);
 
 private:
+  static bool action_pressed;
+
+private:
   void input_tile(const Vector& pos, uint32_t tile);
+  void autotile(const Vector& pos, uint32_t tile);
+  void input_autotile(const Vector& pos, uint32_t tile);
+  void autotile_corner(const Vector& pos, uint32_t tile, TileMap::AutotileCornerOperation op);
+  void input_autotile_corner(const Vector& corner, uint32_t tile, const Vector& override_pos = Vector(-1.f, -1.f));
   void put_tile();
   void draw_rectangle();
+  bool check_tiles_for_fill(uint32_t replace_tile, uint32_t target_tile, uint32_t third_tile) const;
   void fill();
   void put_object();
 
@@ -90,19 +105,21 @@ private:
   void process_right_click();
 
   // sp is sector pos, tp is pos on tilemap.
-  Vector tp_to_sp(const Vector& tp, int tile_size = 32);
-  Vector sp_to_tp(const Vector& sp, int tile_size = 32);
-  Vector tile_screen_pos(const Vector& tp, int tile_size = 32);
+  Vector tp_to_sp(const Vector& tp, int tile_size = 32) const;
+  Vector sp_to_tp(const Vector& sp, int tile_size = 32) const;
+  Vector tile_screen_pos(const Vector& tp, int tile_size = 32) const;
+  Vector align_to_tilemap(const Vector& sp, int tile_size = 32) const;
 
   // in sector position
-  Rectf drag_rect();
-  Rectf tile_drag_rect();
-  Rectf selection_draw_rect();
+  Rectf drag_rect() const;
+  Rectf tile_drag_rect() const;
+  Rectf selection_draw_rect() const;
   void update_tile_selection();
 
 private:
   Editor& m_editor;
   Vector m_hovered_tile;
+  Vector m_hovered_corner;
   Vector m_sector_pos;
   Vector m_mouse_pos;
 

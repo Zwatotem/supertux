@@ -53,6 +53,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/mk/cmake)
 include(ConfigureFiles)
 include(ExternalProject)
+include(CheckCXXCompilerFlag)
 
 ## For autopackage
 set(APPDATADIR "${CMAKE_INSTALL_PREFIX}/share/games/supertux2")
@@ -175,6 +176,7 @@ option(ENABLE_OPENGL "Enable OpenGL support" ON)
 option(ENABLE_OPENGLES2 "Enable OpenGLES2 support" OFF)
 option(GLBINDING_ENABLED "Use glbinding instead of GLEW" OFF)
 option(GLBINDING_DEBUG_OUTPUT "Enable glbinding debug output for each called OpenGL function" OFF)
+
 if(ENABLE_OPENGL)
   if(ENABLE_OPENGLES2)
     pkg_check_modules(GLESV2 REQUIRED glesv2)
@@ -411,7 +413,8 @@ ExternalProject_Add(squirrel
   -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
   -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
   -DCMAKE_INSTALL_PREFIX=${SQUIRREL_PREFIX}
-  -DINSTALL_INC_DIR=include)
+  -DINSTALL_INC_DIR=include
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON)
 
 if(WIN32)
   add_library(squirrel_lib SHARED IMPORTED)
@@ -505,6 +508,19 @@ include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/findlocale/)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/obstack/)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/sexp-cpp/include/)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/SDL_SavePNG/)
+
+# Discord SDK
+# Before removing messages, please check with the community if no one minds that the Discord SDK gets bundled with ST.
+# Some privay-concerned users or free software package managers might need an option to compile ST without the Discord integration.
+option(ENABLE_DISCORD "Compile the Discord integration" ON)
+if(ENABLE_DISCORD)
+  message(STATUS "Discord WILL be compiled. To disable Discord, pass -DENABLE_DISCORD=Off")
+  include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/external/discord-sdk/include)
+  set(BUILD_EXAMPLES OFF)
+  add_subdirectory(external/discord-sdk)
+else(ENABLE_DISCORD)
+  message(STATUS "WARNING : Discord is NOT to be compiled. To enable Discord, pass -DENABLE_DISCORD=On")
+endif(ENABLE_DISCORD)
 
 if(WIN32)
   add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX)
@@ -669,6 +685,18 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         "-Wno-duplicate-enum "
         "-Wno-unreachable-code "
       )
+
+      # This snipped adapted from AOMediaCodec cmakefile
+      # The detection of cross compilation by -Wpoison-system-directories has false positives on macOS because
+      # --sysroot is implicitly added. Turn the warning off.
+      if(NOT DEFINED HAVE_POISON_SYSTEM_DIRECTORIES_WARNING)
+          check_cxx_compiler_flag(-Wpoison-system-directories HAVE_POISON_SYSTEM_DIRECTORIES_WARNING)
+      endif()
+      if(HAVE_POISON_SYSTEM_DIRECTORIES_WARNING)
+        string(CONCAT SUPERTUX2_EXTRA_WARNING_FLAGS
+          "${SUPERTUX2_EXTRA_WARNING_FLAGS} "
+          "-Wno-poison-system-directories ")
+      endif()
     endif()
   endif(WARNINGS)
 endif()
@@ -824,6 +852,9 @@ target_link_libraries(supertux2_lib PUBLIC sqstdlib_lib)
 target_link_libraries(supertux2_lib PUBLIC tinygettext_lib)
 target_link_libraries(supertux2_lib PUBLIC sexp)
 target_link_libraries(supertux2_lib PUBLIC savepng)
+if(ENABLE_DISCORD)
+target_link_libraries(supertux2_lib PUBLIC discord-rpc)
+endif(ENABLE_DISCORD)
 if(VCPKG_BUILD)
   target_link_libraries(supertux2_lib PUBLIC OpenAL::OpenAL)
 else()
@@ -963,6 +994,7 @@ install(DIRECTORY
   ${CMAKE_CURRENT_SOURCE_DIR}/data/images
   ${CMAKE_CURRENT_SOURCE_DIR}/data/fonts
   ${CMAKE_CURRENT_SOURCE_DIR}/data/music
+  ${CMAKE_CURRENT_SOURCE_DIR}/data/particles
   ${CMAKE_CURRENT_SOURCE_DIR}/data/scripts
   ${CMAKE_CURRENT_SOURCE_DIR}/data/shader
   ${CMAKE_CURRENT_SOURCE_DIR}/data/speech
@@ -1124,7 +1156,7 @@ mark_as_advanced(
 mark_as_advanced(
   OPENAL_INCLUDE_DIR
   OPENAL_LIBRARY
-)
+  )
 
 mark_as_advanced(
   SDL2TTF_INCLUDE_DIRS

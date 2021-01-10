@@ -16,6 +16,9 @@
 
 #include "supertux/colorscheme.hpp"
 
+#include "object/cutscene_info.hpp"
+#include "editor/overlay_widget.hpp"
+#include "interface/control.hpp"
 #include "object/floating_text.hpp"
 #include "object/level_time.hpp"
 #include "object/text_object.hpp"
@@ -47,6 +50,7 @@ Color PlayerStatusHUD::text_color(1.f,1.f,0.6f);
 Color TextObject::default_color(1.f,1.f,1.f);
 
 Color FloatingText::text_color(1.f,1.f,0.6f);
+Color CutsceneInfo::text_color(1.f,1.f,0.6f);
 
 Color LevelTime::text_color(1.f,1.f,0.6f);
 
@@ -62,5 +66,9 @@ Color ColorScheme::Text::small_color(1.f,1.f,1.f);
 Color ColorScheme::Text::heading_color(1.f,1.f,0.6f);
 Color ColorScheme::Text::reference_color(0.2f,0.6f,1.f);
 Color ColorScheme::Text::normal_color(1.f,1.f,1.f);
+
+Color EditorOverlayWidget::text_autotile_available_color(1.f,1.f,0.6f);
+Color EditorOverlayWidget::text_autotile_active_color(1.f,1.f,1.f);
+Color EditorOverlayWidget::text_autotile_error_color(1.f,0.2f,0.1f);
 
 /* EOF */

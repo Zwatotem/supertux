@@ -112,7 +112,8 @@ namespace
     the apex of the jump is reached */
   const float JUMP_EARLY_APEX_FACTOR = 3.0;
 
-  const float JUMP_GRACE_TIME = 0.25f; /**< time before hitting the ground that the jump button may be pressed (and still trigger a jump) */
+const float JUMP_GRACE_TIME = 0.25f; /**< time before hitting the ground that the jump button may be pressed (and still trigger a jump) */
+const float COYOTE_TIME = 0.1f; /**< time between the moment leaving a platform without jumping and being able to jump anyways despite being in the air */
 
   /* Tux's collision rectangle */
   const float TUX_WIDTH = 31.8f;
@@ -121,75 +122,80 @@ namespace
   const float BIG_TUX_HEIGHT = 62.8f;
   const float DUCKED_TUX_HEIGHT = 31.8f;
 
-  bool no_water = true;
+/** when Tux swims down and approaches the bottom of the screen, push him back up with that strength */
+const float WATER_FALLOUT_FORCEBACK_STRENGTH = 1024.f;
+
+bool no_water = true;
 
 } // namespace
 
-Player::Player(PlayerStatus &player_status, const std::string &name_) : ExposedObject<Player, scripting::Player>(this),
-                                                                        m_deactivated(false),
-                                                                        m_controller(&InputManager::current()->get_controller()),
-                                                                        m_scripting_controller(new CodeController()),
-                                                                        m_player_status(player_status),
-                                                                        m_duck(false),
-                                                                        m_dead(false),
-                                                                        m_dying(false),
-                                                                        m_winning(false),
-                                                                        m_backflipping(false),
-                                                                        m_backflip_direction(0),
-                                                                        m_peekingX(Direction::AUTO),
-                                                                        m_peekingY(Direction::AUTO),
-                                                                        m_ability_time(),
-                                                                        m_stone(false),
-                                                                        m_swimming(false),
-                                                                        m_swimboosting(false),
-                                                                        m_speedlimit(0), //no special limit
-                                                                        m_scripting_controller_old(nullptr),
-                                                                        m_jump_early_apex(false),
-                                                                        m_on_ice(false),
-                                                                        m_ice_this_frame(false),
-                                                                        m_polyboy(),
-                                                                        m_lightsprite(SpriteManager::current()->create("images/creatures/tux/light.sprite")),
-                                                                        m_powersprite(SpriteManager::current()->create("images/creatures/tux/powerups.sprite")),
-                                                                        m_dir(Direction::RIGHT),
-                                                                        m_old_dir(m_dir),
-                                                                        m_last_ground_y(0),
-                                                                        m_fall_mode(ON_GROUND),
-                                                                        m_on_ground_flag(false),
-                                                                        m_jumping(false),
-                                                                        m_can_jump(true),
-                                                                        m_jump_button_timer(),
-                                                                        m_wants_buttjump(false),
-                                                                        m_does_buttjump(false),
-                                                                        m_invincible_timer(),
-                                                                        m_skidding_timer(),
-                                                                        m_safe_timer(),
-                                                                        m_kick_timer(),
-                                                                        m_shooting_timer(),
-                                                                        m_ability_timer(),
-                                                                        m_cooldown_timer(),
-                                                                        m_dying_timer(),
-                                                                        m_second_growup_sound_timer(),
-                                                                        m_growing(false),
-                                                                        m_backflip_timer(),
-                                                                        m_physic(),
-                                                                        m_visible(true),
-                                                                        m_grabbed_object(nullptr),
-                                                                        // if/when we have complete penny gfx, we can
-                                                                        // load those instead of Tux's sprite in the
-                                                                        // constructor
-                                                                        m_sprite(SpriteManager::current()->create("images/creatures/tux/tux.sprite")),
-                                                                        m_swimming_angle(0),
-                                                                        m_swimming_accel_modifier(100.f),
-                                                                        m_water_jump(false),
-                                                                        m_dive_walk(false),
-                                                                        m_airarrow(Surface::from_file("images/engine/hud/airarrow.png")),
-                                                                        m_floor_normal(),
-                                                                        m_ghost_mode(false),
-                                                                        m_edit_mode(false),
-                                                                        m_unduck_hurt_timer(),
-                                                                        m_idle_timer(),
-                                                                        m_idle_stage(0),
-                                                                        m_climbing(nullptr)
+Player::Player(PlayerStatus& player_status, const std::string& name_) :
+  ExposedObject<Player, scripting::Player>(this),
+  m_deactivated(false),
+  m_controller(&InputManager::current()->get_controller()),
+  m_scripting_controller(new CodeController()),
+  m_player_status(player_status),
+  m_duck(false),
+  m_dead(false),
+  m_dying(false),
+  m_winning(false),
+  m_backflipping(false),
+  m_backflip_direction(0),
+  m_peekingX(Direction::AUTO),
+  m_peekingY(Direction::AUTO),
+  m_ability_time(),
+  m_stone(false),
+  m_falling_below_water(false),
+  m_swimming(false),
+  m_swimboosting(false),
+  m_speedlimit(0), //no special limit
+  m_scripting_controller_old(nullptr),
+  m_jump_early_apex(false),
+  m_on_ice(false),
+  m_ice_this_frame(false),
+  m_lightsprite(SpriteManager::current()->create("images/creatures/tux/light.sprite")),
+  m_powersprite(SpriteManager::current()->create("images/creatures/tux/powerups.sprite")),
+  m_dir(Direction::RIGHT),
+  m_old_dir(m_dir),
+  m_last_ground_y(0),
+  m_fall_mode(ON_GROUND),
+  m_on_ground_flag(false),
+  m_jumping(false),
+  m_can_jump(true),
+  m_jump_button_timer(),
+  m_coyote_timer(),
+  m_wants_buttjump(false),
+  m_does_buttjump(false),
+  m_invincible_timer(),
+  m_skidding_timer(),
+  m_safe_timer(),
+  m_kick_timer(),
+  m_shooting_timer(),
+  m_ability_timer(),
+  m_cooldown_timer(),
+  m_dying_timer(),
+  m_second_growup_sound_timer(),
+  m_growing(false),
+  m_backflip_timer(),
+  m_physic(),
+  m_visible(true),
+  m_grabbed_object(nullptr),
+  // if/when we have complete penny gfx, we can
+  // load those instead of Tux's sprite in the
+  // constructor
+  m_sprite(SpriteManager::current()->create("images/creatures/tux/tux.sprite")),
+  m_swimming_angle(0),
+  m_swimming_accel_modifier(100.f),
+  m_water_jump(false),
+  m_dive_walk(false),
+  m_airarrow(Surface::from_file("images/engine/hud/airarrow.png")),
+  m_floor_normal(),
+  m_ghost_mode(false),
+  m_edit_mode(false),
+  m_unduck_hurt_timer(),
+  m_idle_timer(),
+  m_idle_stage(0),
+  m_climbing(nullptr)
 {
   m_name = name_;
   m_idle_timer.start(static_cast<float>(IDLE_TIME[0]) / 1000.0f);
@@ -442,6 +448,10 @@ void Player::update(float dt_sec)
       m_lightsprite->set_angle(m_sprite->get_angle());
   }
 
+  if (on_ground()) {
+    m_coyote_timer.start(COYOTE_TIME);
+  }
+
   // set fall mode...
   if (on_ground())
   {
@@ -486,6 +496,15 @@ void Player::update(float dt_sec)
     m_second_growup_sound_timer.stop();
   }
 
+  // Handle player approaching the bottom of the screen while swimming
+  if (m_falling_below_water) {
+    m_physic.set_velocity_y(std::min(m_physic.get_velocity_y(), 0.f));
+  }
+
+  if ((get_pos().y > Sector::get().get_height() - m_col.m_bbox.get_height()) && (!m_ghost_mode)) {
+    m_physic.set_acceleration_y(-WATER_FALLOUT_FORCEBACK_STRENGTH);
+  }
+
   // calculate movement for this frame
   m_col.m_movement = m_physic.get_movement(dt_sec);
 
@@ -517,14 +536,14 @@ void Player::update(float dt_sec)
       Vector pspeed = Vector(0, 0);
       Vector paccel = Vector(0, 0);
       Sector::get().add<SpriteParticle>(
-          "images/objects/particles/sparkle.sprite",
-          // draw bright sparkle when there is lots of time left,
-          // dark sparkle when invincibility is about to end
-          (m_invincible_timer.get_timeleft() > TUX_INVINCIBLE_TIME_WARNING) ?
-                                                                            // make every other a longer sparkle to make trail a bit fuzzy
-              (size_t(g_game_time * 20) % 2) ? "small" : "medium"
-                                                                            : "dark",
-          ppos, ANCHOR_MIDDLE, pspeed, paccel, LAYER_OBJECTS + 1 + 5);
+        "images/particles/sparkle.sprite",
+        // draw bright sparkle when there is lots of time left,
+        // dark sparkle when invincibility is about to end
+        (m_invincible_timer.get_timeleft() > TUX_INVINCIBLE_TIME_WARNING) ?
+        // make every other a longer sparkle to make trail a bit fuzzy
+        (size_t(g_game_time*20)%2) ? "small" : "medium"
+        :
+        "dark", ppos, ANCHOR_MIDDLE, pspeed, paccel, LAYER_OBJECTS + 1 + 5);
     }
   }
 
@@ -952,9 +971,9 @@ void Player::do_backflip()
   m_backflip_timer.start(TUX_BACKFLIP_TIME);
 }
 
-void Player::do_jump(float yspeed)
-{
-  if (!on_ground())
+void
+Player::do_jump(float yspeed) {
+  if (!on_ground() && !m_coyote_timer.started())
     return;
 
   m_physic.set_velocity_y(yspeed);
@@ -995,10 +1014,8 @@ void Player::do_jump_apex()
 void Player::handle_vertical_input()
 {
   // Press jump key
-  if (m_controller->pressed(Control::JUMP))
-    m_jump_button_timer.start(JUMP_GRACE_TIME);
-  if (m_controller->hold(Control::JUMP) && m_jump_button_timer.started() && m_can_jump)
-  {
+  if (m_controller->pressed(Control::JUMP)) m_jump_button_timer.start(JUMP_GRACE_TIME);
+  if (m_controller->hold(Control::JUMP) && m_jump_button_timer.started() && (m_can_jump || m_coyote_timer.started())) {
     m_jump_button_timer.stop();
     if (m_duck)
     {
@@ -1023,6 +1040,8 @@ void Player::handle_vertical_input()
       else
         do_jump((fabsf(m_physic.get_velocity_x()) > MAX_WALK_XM) ? -580.0f : -520.0f);
     }
+    //Stop the coyote timer only after calling do_jump, because do_jump also checks for the timer
+    m_coyote_timer.stop();
     // airflower glide only when holding jump key
   }
   else if (m_controller->hold(Control::JUMP) && m_player_status.bonus == AIR_BONUS && m_physic.get_velocity_y() > MAX_GLIDE_YM)
@@ -1536,10 +1555,9 @@ bool Player::set_bonus(BonusType type, bool animate)
       // visually lose hard-hat
       particle_name = "earthtux-hardhat";
     }
-    if (!particle_name.empty() && animate)
-    {
-      Sector::get().add<SpriteParticle>("images/objects/particles/" + particle_name + ".sprite",
-                                        action, ppos, ANCHOR_TOP, pspeed, paccel, LAYER_OBJECTS - 1);
+    if (!particle_name.empty() && animate) {
+      Sector::get().add<SpriteParticle>("images/particles/" + particle_name + ".sprite",
+                                             action, ppos, ANCHOR_TOP, pspeed, paccel, LAYER_OBJECTS - 1);
     }
 
     m_player_status.max_fire_bullets = 0;
@@ -2127,9 +2145,16 @@ void Player::check_bounds()
     set_pos(Vector(Sector::get().get_width() - m_col.m_bbox.get_width(), m_col.m_bbox.get_top()));
   }
 
+  m_falling_below_water = false;
+
   /* fallen out of the level? */
-  if ((get_pos().y > Sector::get().get_height()) && (!m_ghost_mode))
-  {
+  if (m_swimming) {
+    // If swimming, don't kill; just prevent from falling below the ground
+    if ((get_pos().y > Sector::get().get_height() - 1) && (!m_ghost_mode)) {
+      set_pos(Vector(get_pos().x, Sector::get().get_height() - 1));
+      m_falling_below_water = true;
+    }
+  } else if ((get_pos().y > Sector::get().get_height()) && (!m_ghost_mode)) {
     kill(true);
     return;
   }

@@ -5,25 +5,25 @@
   (worldmap #f)
   (object
     (class "snowball")
-    (icon "images/creatures/snowball/sport-left-1.png"))
+    (icon "images/creatures/snowball/snowball-1.png"))
   (object
     (class "smartball")
-    (icon "images/creatures/snowball/left-1.png"))
+    (icon "images/creatures/snowball/smartball-1.png"))
   (object
     (class "snowman")
-    (icon "images/creatures/snowman/walk1.png"))
+    (icon "images/creatures/snowman/smwalk1.png"))
   (object
     (class "bouncingsnowball")
-    (icon "images/creatures/bouncing_snowball/left-5.png"))
+    (icon "images/creatures/bouncing_snowball/bs4.png"))
   (object
     (class "captainsnowball")
-    (icon "images/creatures/snowball/cpt-left-1.png"))
+    (icon "images/creatures/snowball/captain-left-1.png"))
   (object
     (class "flyingsnowball")
     (icon "images/creatures/flying_snowball/left-0.png"))
   (object
     (class "kamikazesnowball")
-    (icon "images/creatures/snowball/kamikaze-left.png"))
+    (icon "images/creatures/snowball/ks1.png"))
   (object
     (class "mrbomb")
     (icon "images/creatures/mr_bomb/bomb1.png"))
@@ -38,13 +38,13 @@
     (icon "images/creatures/short_fuse/sf1.png"))
   (object
     (class "mriceblock")
-    (icon "images/creatures/mr_iceblock/left-0.png"))
+    (icon "images/creatures/mr_iceblock/iceblock-1.png"))
   (object
     (class "smartblock")
-    (icon "images/creatures/mr_iceblock/smart_block/left-0.png"))
+    (icon "images/creatures/mr_iceblock/smart_block/smartblock-1.png"))
   (object
     (class "spiky")
-    (icon "images/creatures/spiky/left-1.png"))
+    (icon "images/creatures/spiky/spikywalk4.png"))
   (object
     (class "sspiky")
     (icon "images/creatures/spiky/sleeping-left.png"))
@@ -220,8 +220,14 @@
     (class "bicycle-platform")
     (icon "images/engine/editor/bicycleplatform.png"))
   (object
+    (class "circleplatform")
+    (icon "images/engine/editor/circeplatform.png"))
+  (object
     (class "hurting_platform")
     (icon "images/objects/sawblade/default-0.png"))
+  (object
+    (class "fallblock")
+    (icon "images/objects/fallblock/cave-4x4.png"))
   (object
     (class "scriptedobject")
     (icon "images/engine/editor/scriptedobject.png"))
@@ -236,7 +242,10 @@
     (icon "images/objects/rublight/rublight.png"))
   (object
     (class "rustytrampoline")
-    (icon "images/objects/rusty-trampoline/trampoline1-0.png"))
+    (icon "images/objects/rusty-trampoline/rustytrampoline-editor.png"))
+  (object
+    (class "bumper")
+    (icon "images/objects/trampoline/right-0.png"))
   (object
     (class "trampoline")
     (icon "images/objects/trampoline/trampoline-editor.png"))
@@ -295,6 +304,9 @@
     (class "wind")
     (icon "images/engine/editor/wind.png"))
   (object
+    (class "particle-zone")
+    (icon "images/engine/editor/particle_zone.png"))
+  (object
     (class "skull_tile")
     (icon "images/objects/skull_tile/skull.png"))
  )
@@ -326,6 +338,21 @@
   (object
     (class "particles-snow")
     (icon "images/engine/editor/snow.png"))
+
+
+
+;;  +-- This should be disabled, as it probably won't support multiple textures
+;;  |   per config object.
+;;  v                               ~ Semphris
+  (object
+    (class "particles-custom")
+    (icon "images/engine/editor/sparkle.png"))
+
+
+
+  (object
+    (class "particles-custom-file")
+    (icon "images/engine/editor/sparkle-file.png"))
   (object
     (class "thunderstorm")
     (icon "images/engine/editor/thunderstorm.png"))

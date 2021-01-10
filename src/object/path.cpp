@@ -19,6 +19,7 @@
 #include "object/path.hpp"
 
 #include "editor/node_marker.hpp"
+#include "math/easing.hpp"
 #include "supertux/sector.hpp"
 #include "util/reader_mapping.hpp"
 #include "util/writer.hpp"
@@ -68,6 +69,7 @@ Path::Path(const Vector& pos) :
   first_node.position = pos;
   first_node.time = 1;
   first_node.speed = 0;
+  first_node.easing = EaseNone;
   m_nodes.push_back(first_node);
 }
 
@@ -90,11 +92,13 @@ Path::read(const ReaderMapping& reader)
       Node node;
       node.time = 1;
       node.speed = 0;
+      node.easing = EaseNone;
       if ( (!node_mapping.get("x", node.position.x) ||
            !node_mapping.get("y", node.position.y)))
         throw std::runtime_error("Path node without x and y coordinate specified");
       node_mapping.get("time", node.time);
       node_mapping.get("speed", node.speed);
+      node_mapping.get_custom("easing", node.easing, EasingMode_from_string);
 
       if (node.time <= 0)
         throw std::runtime_error("Path node with non-positive time");
@@ -128,6 +132,9 @@ Path::save(Writer& writer)
     }
     if (nod.speed != 0.0f) {
       writer.write("speed", nod.speed);
+    }
+    if (nod.easing != EaseNone) {
+      writer.write("easing", getEasingName(nod.easing));
     }
     writer.end_list("node");
   }
